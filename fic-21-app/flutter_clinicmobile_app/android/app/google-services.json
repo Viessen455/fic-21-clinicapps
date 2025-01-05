@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "865273128306",
+    "project_id": "fic-21-apps",
+    "storage_bucket": "fic-21-apps.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:865273128306:android:3bebe001357f924f10a9eb",
+        "android_client_info": {
+          "package_name": "com.example.flutter_clinicmobile_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "865273128306-1ug27jkggigm5d3e08btl6midusf0u7b.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.flutter_clinicmobile_app",
+            "certificate_hash": "081b0ddea0a2fa33959d084f914fd84716c59d36"
+          }
+        },
+        {
+          "client_id": "865273128306-cm5t9mekfgksps3fl2n941vakajlghl6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMdUWCnkGzFzWrNAMy4PlK7RIcZ2kauIQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "865273128306-cm5t9mekfgksps3fl2n941vakajlghl6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
