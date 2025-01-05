@@ -4,7 +4,7 @@ using flutter for frontend and laravel as backend
 
 Flutter : 
 
-intergrated firebase, login with google and using figma for design
+intergrated firebase, login with google, payment gateway with xendit and using figma for design
 
 Laravel : 
 
