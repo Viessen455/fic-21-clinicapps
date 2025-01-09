@@ -175,16 +175,20 @@ class UserController extends Controller
             $google_id = $payload['sub'];
             $email = $payload['email'];
             $name = $payload['name'];
+            $photo = $payload['picture'];
 
             $user = User::where('email', $email)->first();
 
             if($user){
+                $user->google_id = $google_id;
+                $user->save();
                 $token = $user->createToken('auth_token')->plainTextToken;
 
                 return response()->json([
                     'status'  => 'success',
                     'data' => [
                         'user' => $user,
+                        // 'is_new' => false,
                         'token' => $token
                     ]
                 ], 200);
@@ -194,6 +198,7 @@ class UserController extends Controller
                     'email' => $email,
                     'google_id' => $google_id,
                     'password' => Hash::make('password'),
+                    'image' => $photo,
                     'role' => 'user'
                 ]);
 
@@ -203,11 +208,17 @@ class UserController extends Controller
                     'status'  => 'success',
                     'data' => [
                         'user' => $user,
+                        // 'is_new' => true,
                         'token' => $token
                     ]
-                ], 200);
+                ], 201);
             }
 
+        }else{
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Invalid ID Token'
+            ], 401);
         }
     }
 }

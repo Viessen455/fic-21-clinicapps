@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:flutter_clinicmobile_app/data/datasources/doctor_remote_datasource.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import '../../../data/models/doctor_response_model.dart';
+import '../../../data/models/response/doctor_response_model.dart';
 
 
 part 'doctor_telemedis_event.dart';

@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
           create: (context) => DoctorTelemedisBloc(DoctorRemoteDataSource()),
         ),
         BlocProvider(
-          create: (context) => LoginGoogleBloc(AuthRemoteDataSource()),
+          create: (context) => LoginGoogleBloc(AuthRemoteDatasource()),
         ),
       ],
       child: MaterialApp(

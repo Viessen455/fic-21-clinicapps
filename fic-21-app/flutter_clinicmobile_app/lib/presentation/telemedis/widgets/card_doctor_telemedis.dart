@@ -6,7 +6,7 @@ import 'package:flutter_clinicmobile_app/core/components/buttons.dart';
 import 'package:flutter_clinicmobile_app/core/components/spaces.dart';
 import 'package:flutter_clinicmobile_app/core/constants/colors.dart';
 import 'package:flutter_clinicmobile_app/core/extensions/build_context_ext.dart';
-import 'package:flutter_clinicmobile_app/data/models/doctor_response_model.dart';
+import 'package:flutter_clinicmobile_app/data/models/response/doctor_response_model.dart';
 import 'package:flutter_clinicmobile_app/presentation/telemedis/pages/vidcall_page.dart';
 
 class CardDoctorTelemedis extends StatelessWidget {
