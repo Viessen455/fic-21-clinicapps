@@ -10,4 +10,6 @@ Laravel :
 
 REST API implementation, MVC model, and implementation of filament as Easy UI and crud maker.
 
-Status : Not Completed Yet (5/7)
+Not completed code only (6/8) but still function able
+
+the incomplete due to massive code changes
