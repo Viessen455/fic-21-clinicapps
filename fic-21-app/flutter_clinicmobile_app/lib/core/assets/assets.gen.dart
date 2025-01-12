@@ -49,6 +49,8 @@ class $AssetsIconsGen {
   /// File path: assets/icons/like-shapes.png
   AssetGenImage get likeShapes =>
       const AssetGenImage('assets/icons/like-shapes.png');
+  /// File path: assets/icons/image.svg
+  SvgGenImage get image => const SvgGenImage('assets/icons/image.svg');
 
   /// File path: assets/icons/logout.png
   AssetGenImage get logout => const AssetGenImage('assets/icons/logout.png');

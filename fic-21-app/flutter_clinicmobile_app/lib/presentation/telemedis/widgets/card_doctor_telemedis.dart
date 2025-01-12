@@ -5,22 +5,28 @@ import 'package:flutter_clinicmobile_app/core/assets/assets.gen.dart';
 import 'package:flutter_clinicmobile_app/core/components/buttons.dart';
 import 'package:flutter_clinicmobile_app/core/components/spaces.dart';
 import 'package:flutter_clinicmobile_app/core/constants/colors.dart';
+import 'package:flutter_clinicmobile_app/core/constants/global_variable.dart';
 import 'package:flutter_clinicmobile_app/core/extensions/build_context_ext.dart';
+import 'package:flutter_clinicmobile_app/core/extensions/string_ext.dart';
+import 'package:flutter_clinicmobile_app/core/utils/convert.dart';
 import 'package:flutter_clinicmobile_app/data/models/response/doctor_response_model.dart';
-import 'package:flutter_clinicmobile_app/presentation/telemedis/pages/vidcall_page.dart';
+import 'package:flutter_clinicmobile_app/presentation/chat/pages/detail_doctor_page.dart';
 
 class CardDoctorTelemedis extends StatelessWidget {
-  final User user;
+  final DoctorModel model;
   const CardDoctorTelemedis({
     super.key,
-    required this.user
-});
+    required this.model,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        context.push(const VidCallPage());
+        context.push(DetailDoctorPage(
+          doctor: model,
+          isTelemedis: true,
+        ));
       },
       child: Container(
         width: context.deviceWidth,
@@ -43,24 +49,30 @@ class CardDoctorTelemedis extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  child: Image.network(
-                    user.image?? '',
-                    width: 87.0,
-                    height: 87.0,
-                    fit: BoxFit.cover,
-                  ),
-                ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    child: model.image != null
+                        ? Image.network(
+                      "${GlobalVariable.baseUrl}${model.image}",
+                      width: 87.0,
+                      height: 87.0,
+                      fit: BoxFit.cover,
+                    )
+                        : Image.asset(
+                      Assets.images.doctor1.path,
+                      width: 87.0,
+                      height: 87.0,
+                      fit: BoxFit.cover,
+                    )),
                 const SpaceWidth(20),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        user.name?? '',
+                        model.name ?? '-',
                         style: const TextStyle(
                           fontSize: 14.0,
                           fontWeight: FontWeight.w600,
@@ -69,7 +81,7 @@ class CardDoctorTelemedis extends StatelessWidget {
                       ),
                       const SpaceHeight(4),
                       Text(
-                        user.specialist?.name ?? '',
+                        model.specialation?.name ?? '-',
                         style: const TextStyle(
                           fontSize: 12.0,
                           fontWeight: FontWeight.w400,
@@ -79,12 +91,13 @@ class CardDoctorTelemedis extends StatelessWidget {
                       const SpaceHeight(10),
                       _itemRow(
                         Assets.icons.hospitalPrimary.path,
-                        user.clinic?.name?? '',
+                        model.clinic?.name ?? '-',
                       ),
                       const SpaceHeight(8),
                       _itemRow(
                         Assets.icons.clockPrimary.path,
-                        '${user.clinic?.openTime?? '' } -  ${user.clinic?.closeTime?? '' }',
+                        Convert.formatTimeWithoutSeconds(
+                            model.startTime?.toString() ?? '00:00:00'),
                       ),
                     ],
                   ),
@@ -107,7 +120,8 @@ class CardDoctorTelemedis extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Rp ${user.telemedicineFee ?? ''}',
+                      model.telemedicineFee?.toString().currencyFormatRpV2 ??
+                          '-',
                       style: const TextStyle(
                         fontSize: 13.0,
                         fontWeight: FontWeight.w600,
@@ -121,7 +135,12 @@ class CardDoctorTelemedis extends StatelessWidget {
                   height: 34,
                   child: Button.filled(
                     borderRadius: 10,
-                    onPressed: () {},
+                    onPressed: () {
+                      context.push(DetailDoctorPage(
+                        doctor: model,
+                        isTelemedis: true,
+                      ));
+                    },
                     label: 'Telemedis',
                     fontSize: 12.0,
                   ),

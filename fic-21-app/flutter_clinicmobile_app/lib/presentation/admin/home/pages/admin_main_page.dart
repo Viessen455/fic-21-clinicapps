@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../../core/assets/assets.gen.dart';
-import '../../../../core/constants/colors.dart';
+import 'package:flutter_clinicmobile_app/core/assets/assets.gen.dart';
+import 'package:flutter_clinicmobile_app/core/constants/colors.dart';
+import 'package:flutter_clinicmobile_app/presentation/admin/doctor/pages/admin_doctor_page.dart';
+import 'package:flutter_clinicmobile_app/presentation/admin/home/pages/admin_home_page.dart';
+import 'package:flutter_clinicmobile_app/presentation/admin/profile/pages/profile_admin_page.dart';
 import '../../../home/widgets/nav_item.dart';
-import '../../doctor/pages/admin_doctor_page.dart';
-import '../../profile/pages/profile_admin_page.dart';
-import 'admin_home_page.dart';
 
 class AdminMainPage extends StatefulWidget {
   const AdminMainPage({super.key});
@@ -32,7 +32,7 @@ class _AdminMainPageState extends State<AdminMainPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
-      body: SafeArea(child: _pages[_selectedIndex]),
+      body: _pages[_selectedIndex],
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(20.0),
         decoration: BoxDecoration(

@@ -1,14 +1,25 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
 import 'package:flutter_clinicmobile_app/core/assets/assets.gen.dart';
 import 'package:flutter_clinicmobile_app/core/components/buttons.dart';
 import 'package:flutter_clinicmobile_app/core/components/spaces.dart';
 import 'package:flutter_clinicmobile_app/core/constants/colors.dart';
+import 'package:flutter_clinicmobile_app/core/constants/global_variable.dart';
 import 'package:flutter_clinicmobile_app/core/extensions/build_context_ext.dart';
+import 'package:flutter_clinicmobile_app/core/extensions/string_ext.dart';
+import 'package:flutter_clinicmobile_app/data/models/response/doctor_response_model.dart';
 import 'package:flutter_clinicmobile_app/presentation/chat/pages/premium_chat_page.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class DetailDoctorPage extends StatelessWidget {
-  const DetailDoctorPage({super.key});
+  final DoctorModel doctor;
+  final bool isTelemedis;
+  const DetailDoctorPage({
+    super.key,
+    required this.doctor,
+    required this.isTelemedis,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,10 +37,10 @@ class DetailDoctorPage extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     "Biaya Konsultasi",
                     style: TextStyle(
                       fontSize: 12.0,
@@ -38,8 +49,10 @@ class DetailDoctorPage extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    "Rp. 40.000",
-                    style: TextStyle(
+                    isTelemedis
+                        ? doctor.telemedicineFee!.toString().currencyFormatRpV2
+                        : doctor.chatFee!.toString().currencyFormatRpV2,
+                    style: const TextStyle(
                       fontSize: 13.0,
                       fontWeight: FontWeight.w600,
                       color: Color(
@@ -54,9 +67,14 @@ class DetailDoctorPage extends StatelessWidget {
                 height: 40,
                 borderRadius: 10,
                 onPressed: () {
-                  context.push(const PremiumChatPage());
+                  context.push(
+                    PremiumChatPage(
+                      doctor: doctor,
+                      isTelemedis: isTelemedis,
+                    ),
+                  );
                 },
-                label: 'Chat Sekarang',
+                label: isTelemedis ? 'Call Sekarang' : 'Chat Sekarang',
                 fontSize: 12.0,
               )
             ],
@@ -67,8 +85,15 @@ class DetailDoctorPage extends StatelessWidget {
             child: Stack(
               children: [
                 Container(
+                  height: context.deviceHeight * 0.5,
                   color: AppColors.primary,
-                  child: Image.asset(
+                  child: doctor.image != null
+                      ? Image.network(
+                    "${GlobalVariable.baseUrl}${doctor.image!}",
+                    width: context.deviceWidth,
+                    fit: BoxFit.cover,
+                  )
+                      : Image.asset(
                     Assets.images.doctor1.path,
                     width: context.deviceWidth,
                     fit: BoxFit.cover,
@@ -98,17 +123,17 @@ class DetailDoctorPage extends StatelessWidget {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                "dr. Kiara Tasbiha",
-                                style: TextStyle(
+                              Text(
+                                doctor.name ?? "-",
+                                style: const TextStyle(
                                   fontSize: 18.0,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.black,
                                 ),
                               ),
-                              const Text(
-                                "Spesialis  Kandungan",
-                                style: TextStyle(
+                              Text(
+                                doctor.specialation?.name ?? "-",
+                                style: const TextStyle(
                                   fontSize: 12.0,
                                   fontWeight: FontWeight.w500,
                                   color: Colors.grey,
@@ -180,15 +205,7 @@ class DetailDoctorPage extends StatelessWidget {
                       ),
                       const SpaceHeight(8),
                       item(
-                        'Sertifikasi Ultrasonografi Kandungan dan Kebidanan',
-                        'Asosiasi Ultrasonografi Indonesia',
-                        '2016',
-                      ),
-                      const SpaceHeight(16),
-                      item(
-                        'Pelatihan Penanganan Gawat Darurat Kebidanan',
-                        'Rumah Sakit Pusat Jakarta',
-                        '2020',
+                        doctor.certification ?? "-",
                       ),
                       const SpaceHeight(24),
                       const Text(
@@ -200,9 +217,9 @@ class DetailDoctorPage extends StatelessWidget {
                         ),
                       ),
                       const SpaceHeight(8),
-                      const Text(
-                        "Klinik Sehat Prima",
-                        style: TextStyle(
+                      Text(
+                        doctor.clinic?.name ?? "-",
+                        style: const TextStyle(
                           fontSize: 12.0,
                           fontWeight: FontWeight.w400,
                           color: AppColors.grey,
@@ -211,13 +228,38 @@ class DetailDoctorPage extends StatelessWidget {
                     ],
                   ),
                 ),
+                //button back
+                Positioned(
+                  top: 20,
+                  left: 20,
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: AppColors.white,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.arrow_back,
+                            color: AppColors.primary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
         ));
   }
 
-  Widget item(String certification, String place, String year) {
+  Widget item(
+      String certification,
+      ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -231,7 +273,8 @@ class DetailDoctorPage extends StatelessWidget {
         const SpaceWidth(8),
         Expanded(
           child: Text(
-            "$certification \n$place \nTahun: $year",
+            // "$certification \n$place \nTahun: $year",
+            certification,
             style: const TextStyle(
               fontSize: 12.0,
               fontWeight: FontWeight.w400,

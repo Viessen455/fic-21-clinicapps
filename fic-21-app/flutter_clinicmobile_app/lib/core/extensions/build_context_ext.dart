@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_clinicmobile_app/core/assets/assets.gen.dart';
+import 'package:flutter_clinicmobile_app/core/components/spaces.dart';
 
 import '../constants/colors.dart';
 
@@ -49,5 +51,45 @@ extension NavigatorExt on BuildContext {
       content: Text(message),
       backgroundColor: color,
     ));
+  }
+
+  void showDialogError(String title, String subtitle) {
+    showDialog(
+      context: this,
+      builder: (context) {
+        return AlertDialog(
+          content: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Assets.icons.likeShapes.image(
+                  width: 150.0,
+                  height: 150.0,
+                  fit: BoxFit.cover,
+                ),
+                const SpaceHeight(32.0),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SpaceHeight(16.0),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: AppColors.gray,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }

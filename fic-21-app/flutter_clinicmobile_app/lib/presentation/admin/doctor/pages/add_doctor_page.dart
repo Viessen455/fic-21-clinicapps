@@ -1,11 +1,24 @@
+import 'dart:developer';
+
+import 'package:flutter_clinicmobile_app/core/components/image_picker_widget.dart';
+import 'package:flutter_clinicmobile_app/core/extensions/string_ext.dart';
+import 'package:flutter_clinicmobile_app/core/utils/convert.dart';
+import 'package:flutter_clinicmobile_app/data/datasources/auth_local_datasource.dart';
+import 'package:flutter_clinicmobile_app/data/models/request/doctor_request_model.dart';
+import 'package:flutter_clinicmobile_app/data/models/response/specialation_response_model.dart';
+import 'package:flutter_clinicmobile_app/presentation/admin/doctor/blocs/add_doctor/add_doctor_bloc.dart';
+import 'package:flutter_clinicmobile_app/presentation/admin/doctor/blocs/get_specialations/get_specialations_bloc.dart';
+import 'package:flutter_clinicmobile_app/presentation/chat/blocs/get_doctors/get_doctors_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_clinicmobile_app/core/components/buttons.dart';
+import 'package:flutter_clinicmobile_app/core/components/custom_text_field.dart';
+import 'package:flutter_clinicmobile_app/core/components/custom_text_field_height.dart';
+import 'package:flutter_clinicmobile_app/core/components/spaces.dart';
+import 'package:flutter_clinicmobile_app/core/constants/colors.dart';
 import 'package:flutter_clinicmobile_app/core/extensions/build_context_ext.dart';
-import '../../../../core/components/buttons.dart';
-import '../../../../core/components/custom_text_field.dart';
-import '../../../../core/components/custom_text_field_height.dart';
-import '../../../../core/components/spaces.dart';
-import '../../../../core/constants/colors.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AddDoctorPage extends StatefulWidget {
   const AddDoctorPage({super.key});
@@ -16,6 +29,57 @@ class AddDoctorPage extends StatefulWidget {
 
 class _AddDoctorPageState extends State<AddDoctorPage> {
   String? _selectedGender;
+  TextEditingController? _nameController;
+  TextEditingController? _emailController;
+  TextEditingController? _sertificationController;
+  TextEditingController? _telemedicRateController;
+  TextEditingController? _chatPremiumRateController;
+  TimeOfDay? _startTime;
+  TimeOfDay? _endTime;
+  XFile? imageFile;
+  SpecialationModel? _selectedSpecialation;
+  @override
+  void initState() {
+    _nameController = TextEditingController();
+    _emailController = TextEditingController();
+    _sertificationController = TextEditingController();
+    _telemedicRateController = TextEditingController();
+    _chatPremiumRateController = TextEditingController();
+    context
+        .read<GetSpecialationsBloc>()
+        .add(const GetSpecialationsEvent.getSpecialations());
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _nameController?.dispose();
+    _emailController?.dispose();
+    _sertificationController?.dispose();
+    _telemedicRateController?.dispose();
+    _chatPremiumRateController?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectTime(BuildContext context, bool isStart) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: isStart
+          ? (_startTime ?? TimeOfDay.now())
+          : (_endTime ?? TimeOfDay.now()),
+    );
+
+    if (picked != null) {
+      setState(() {
+        if (isStart) {
+          _startTime = picked;
+        } else {
+          _endTime = picked;
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -28,11 +92,71 @@ class _AddDoctorPageState extends State<AddDoctorPage> {
         height: 52,
         margin: const EdgeInsets.all(20),
         width: context.deviceWidth,
-        child: Button.filled(
-          height: 48,
-          onPressed: () {},
-          label: 'Simpan',
-          fontSize: 16.0,
+        child: BlocConsumer<AddDoctorBloc, AddDoctorState>(
+          listener: (context, state) {
+            state.maybeWhen(
+              orElse: () {},
+              error: (message) {
+                context.showSnackBar(message, Colors.red);
+              },
+              success: (message) {
+                context
+                    .read<GetDoctorsBloc>()
+                    .add(const GetDoctorsEvent.getDoctors());
+                context.showSnackBar(
+                  message,
+                );
+                context.pop();
+              },
+            );
+          },
+          builder: (context, state) {
+            return state.maybeWhen(
+              orElse: () {
+                return Button.filled(
+                  height: 48,
+                  onPressed: () async {
+                    final telemedicRate = Convert.cleanCurrencyToNumber(
+                        _telemedicRateController!.text);
+                    final chatPremiumRate = Convert.cleanCurrencyToNumber(
+                        _chatPremiumRateController!.text);
+
+                    final startTime = Convert.formatTo24Hour(_startTime!);
+                    final endTime = Convert.formatTo24Hour(_endTime!);
+                    // remvoe space nameController.text and all lowercase
+                    final userData = await AuthLocalDatasource().getUserData();
+                    final model = DoctorRequestModel(
+                      name: _nameController!.text,
+                      email: _emailController!.text,
+                      role: 'doctor',
+                      status: 'active',
+                      gender: _selectedGender!,
+                      certification: _sertificationController!.text,
+                      specialationId: _selectedSpecialation!.id,
+                      telemedicineFee: telemedicRate,
+                      chatFee: chatPremiumRate,
+                      startTime: startTime,
+                      endTime: endTime,
+                      clinicId: userData!.data!.user!.clinicId!.toString(),
+                      image: imageFile,
+                    );
+                    context
+                        .read<AddDoctorBloc>()
+                        .add(AddDoctorEvent.addDoctor(model));
+                  },
+                  label: 'Simpan',
+                  fontSize: 16.0,
+                );
+              },
+              loading: () {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.primary,
+                  ),
+                );
+              },
+            );
+          },
         ),
       ),
       body: SafeArea(
@@ -76,7 +200,7 @@ class _AddDoctorPageState extends State<AddDoctorPage> {
             const SpaceHeight(24),
             Container(
               margin:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+              const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
               padding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 16,
@@ -107,8 +231,26 @@ class _AddDoctorPageState extends State<AddDoctorPage> {
                     8,
                   ),
                   CustomTextField(
-                    controller: TextEditingController(),
+                    controller: _nameController!,
                     label: 'Masukkan nama Dokter',
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SpaceHeight(
+                    16,
+                  ),
+                  const Text(
+                    "Email Dokter",
+                    style: TextStyle(
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black),
+                  ),
+                  const SpaceHeight(
+                    8,
+                  ),
+                  CustomTextField(
+                    controller: _emailController!,
+                    label: 'Masukkan Email Dokter',
                     textInputAction: TextInputAction.next,
                   ),
                   const SpaceHeight(
@@ -125,7 +267,7 @@ class _AddDoctorPageState extends State<AddDoctorPage> {
                     8,
                   ),
                   CustomTextFieldHeight(
-                    controller: TextEditingController(),
+                    controller: _sertificationController!,
                     label: 'Masukkan Sertifikasi',
                   ),
                   const SpaceHeight(
@@ -156,7 +298,7 @@ class _AddDoctorPageState extends State<AddDoctorPage> {
                             },
                             activeColor: Colors.blue,
                             materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
+                            MaterialTapTargetSize.shrinkWrap,
                           ),
                           GestureDetector(
                             onTap: () {
@@ -190,7 +332,7 @@ class _AddDoctorPageState extends State<AddDoctorPage> {
                             },
                             activeColor: AppColors.primary,
                             materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
+                            MaterialTapTargetSize.shrinkWrap,
                           ),
                           GestureDetector(
                             onTap: () {
@@ -226,10 +368,70 @@ class _AddDoctorPageState extends State<AddDoctorPage> {
                   const SpaceHeight(
                     8,
                   ),
-                  CustomTextField(
-                    controller: TextEditingController(),
-                    label: 'Masukkan Spesialis',
-                    keyboardType: TextInputType.number,
+                  BlocBuilder<GetSpecialationsBloc, GetSpecialationsState>(
+                    builder: (context, state) {
+                      return state.maybeWhen(
+                        orElse: () {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        },
+                        success: (data) {
+                          _selectedSpecialation = data.data.firstWhere(
+                                  (element) =>
+                              element.id == _selectedSpecialation?.id,
+                              orElse: () => data.data.first);
+                          return DropdownButtonHideUnderline(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              child: DropdownButton<SpecialationModel>(
+                                value: _selectedSpecialation,
+                                hint: const Text(
+                                  "Pilih Spesialisasi",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                    color: Color(
+                                      0xff677294,
+                                    ),
+                                  ),
+                                ),
+                                isExpanded: true,
+                                onChanged: (newValue) {
+                                  if (newValue != null) {
+                                    _selectedSpecialation = newValue;
+                                    log('Selected Spesialisasi: ${_selectedSpecialation!.toMap()}');
+                                    setState(() {});
+                                  }
+                                },
+                                items: data.data
+                                    .map<DropdownMenuItem<SpecialationModel>>(
+                                        (SpecialationModel specialation) {
+                                      return DropdownMenuItem<SpecialationModel>(
+                                        value: specialation,
+                                        child: Text(
+                                          specialation.name,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w400,
+                                            color: Color(
+                                              0xff677294,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
                   const SpaceHeight(
                     16,
@@ -245,9 +447,17 @@ class _AddDoctorPageState extends State<AddDoctorPage> {
                     8,
                   ),
                   CustomTextField(
-                    controller: TextEditingController(),
+                    controller: _telemedicRateController!,
                     label: 'Masukkan tarif telemedis ',
                     keyboardType: TextInputType.number,
+                    onChanged: (value) {
+                      final int priceValue = value.toIntegerFromText;
+                      _telemedicRateController!.text =
+                          priceValue.toString().currencyFormatRpV2;
+                      _telemedicRateController!.selection =
+                          TextSelection.fromPosition(TextPosition(
+                              offset: _telemedicRateController!.text.length));
+                    },
                   ),
                   const SpaceHeight(
                     16,
@@ -263,9 +473,17 @@ class _AddDoctorPageState extends State<AddDoctorPage> {
                     8,
                   ),
                   CustomTextField(
-                    controller: TextEditingController(),
+                    controller: _chatPremiumRateController!,
                     label: 'Masukkan tarif chat premium',
                     keyboardType: TextInputType.number,
+                    onChanged: (value) {
+                      final int priceValue = value.toIntegerFromText;
+                      _chatPremiumRateController!.text =
+                          priceValue.toString().currencyFormatRpV2;
+                      _chatPremiumRateController!.selection =
+                          TextSelection.fromPosition(TextPosition(
+                              offset: _chatPremiumRateController!.text.length));
+                    },
                   ),
                   const SpaceHeight(
                     16,
@@ -283,59 +501,81 @@ class _AddDoctorPageState extends State<AddDoctorPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(12.0),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.grey),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(
-                              Icons.schedule,
-                              size: 24.0,
-                              color: AppColors.grey,
-                            ),
-                            SpaceWidth(6),
-                            Text(
-                              "Mulai",
-                              style: TextStyle(
-                                fontSize: 12.0,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.grey,
+                      GestureDetector(
+                        onTap: () => _selectTime(context, true),
+                        child: Container(
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.schedule,
+                                size: 24.0,
+                                color: Colors.grey,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 6),
+                              Text(
+                                _startTime != null
+                                    ? _startTime!.format(context)
+                                    : "Mulai",
+                                style: const TextStyle(
+                                  fontSize: 12.0,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.all(12.0),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.grey),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(
-                              Icons.schedule,
-                              size: 24.0,
-                              color: AppColors.grey,
-                            ),
-                            SpaceWidth(6),
-                            Text(
-                              "Selesai",
-                              style: TextStyle(
-                                fontSize: 12.0,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.grey,
+                      GestureDetector(
+                        onTap: () => _selectTime(context, false),
+                        child: Container(
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.schedule,
+                                size: 24.0,
+                                color: Colors.grey,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 6),
+                              Text(
+                                _endTime != null
+                                    ? _endTime!.format(context)
+                                    : "Selesai",
+                                style: const TextStyle(
+                                  fontSize: 12.0,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
+                  ),
+                  const SpaceHeight(
+                    16,
+                  ),
+                  ImagePickerWidget(
+                    label: 'Image',
+                    onChanged: (file) {
+                      if (file == null) {
+                        return;
+                      }
+                      imageFile = file;
+                    },
                   ),
                   const SpaceHeight(24),
                 ],

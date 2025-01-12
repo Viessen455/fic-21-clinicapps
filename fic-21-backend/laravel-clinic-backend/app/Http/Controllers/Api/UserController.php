@@ -7,69 +7,74 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Google_Client;
-
+use Carbon\Carbon;
 
 class UserController extends Controller
 {
-     // index
-     public function index($email){
+    //index
+    public function index($email)
+    {
         $user = User::where('email', $email)->first();
-        return response ()->json([
-            'message' => 'success',
+        return response()->json([
+            'status' => 'success',
             'data' => $user
         ]);
     }
 
-    // update google id user
-    public function updateGoogleId(Request $request, $id){
+    //update googleid
+
+    public function updateGoogleId(Request $request, $id)
+    {
         $request->validate([
             'google_id' => 'required'
         ]);
 
         $user = User::find($id);
 
-        if($user){
+        if ($user) {
             $user->google_id = $request->google_id;
             $user->save();
 
             return response()->json([
-                'status'  =>  'success',
-                'data'  =>  $user
+                'status' => 'success',
+                'data' => $user
             ]);
-        }else{
+        } else {
             return response()->json([
-                'status'  =>  'error',
-                'message'  =>  'User Not Found'
+                'status' => 'error',
+                'message' => 'User not found'
             ], 404);
         }
     }
 
-    public function update(Request $request, $id){
-
+    //update user
+    public function update(Request $request, $id)
+    {
         $request->validate([
             'name' => 'required',
-            'email' => 'required|email',
-            'phone' => 'required',
             'address' => 'required',
-            'google_id' => 'required',
-            'ktp_number' => 'required',
             'birth_date' => 'required',
             'gender' => 'required',
             'phone_number' => 'required',
         ]);
 
-            $data = $request->all();
-            $user = User::find ($id);
-            $user->update($data);
+        $data = $request->all();
 
-            return response()->json([
-                'status'  => 'success',
-                'data' => $user
-            ]);
+        $tanggal = Carbon::createFromFormat('d-m-Y', $data['birth_date'])->format('Y-m-d');
+        $data['birth_date'] = $tanggal;
 
+        $user = User::find($id);
+        $user->update($data);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $user
+        ]);
     }
 
-    public function checkEmail(Request $request){
+    //check email
+    public function checkEmail(Request $request)
+    {
         $request->validate([
             'email' => 'required|email'
         ]);
@@ -77,24 +82,25 @@ class UserController extends Controller
         $email = $request->email;
         $user = User::where('email', $email)->first();
 
-        if($user){
+        if ($user) {
             return response()->json([
-                'status'  => 'success',
-                'Message' => 'Email already Registered',
+                'status' => 'success',
+                'message' => 'Email already registered',
                 'valid' => false
             ]);
-        }else{
+        } else {
             return response()->json([
-                'status'  => 'Error',
-                'Message' => 'Email not Registered',
+                'status' => 'error',
+                'message' => 'Email not registered',
                 'valid' => true
             ], 404);
         }
     }
 
-    public function login(Request $request){
+    public function login(Request $request)
+    {
         $request->validate([
-            'email'  =>  'required|email',
+            'email' => 'required|email',
             'password' => 'required'
         ]);
 
@@ -103,50 +109,46 @@ class UserController extends Controller
 
         $user = User::where('email', $email)->first();
 
-        if(!$user || !Hash::check($password, $user->password)){
+        if (!$user || !Hash::check($password, $user->password)) {
             return response()->json([
-                'status'  => 'Error',
-                'Message' => 'Invalid credentials',
-                'valid' => true
+                'status' => 'error',
+                'message' => 'Invalid credentials',
             ], 401);
-
-        }else{
-            $token = $user->createToken('auth_token')->plainTextToken;
-
-            return response()->json([
-                'status'  => 'Success',
-                'data' => [
-                    'user' => $user,
-                    'token' => $token
-                ]
-            ], 200);
-
         }
 
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'user' => $user,
+                'token' => $token
+            ]
+        ], 200);
     }
 
-    public function logout(Request $request){
+    //logout
+    public function logout(Request $request)
+    {
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
-            'status'  => 'success',
-            'Message' => 'Token Deleted',
+            'status' => 'success',
+            'message' => 'Token deleted'
         ]);
-
     }
 
-    public function store(Request $request){
-
-
+    //store
+    public function store(Request $request)
+    {
         $request->validate([
             'name' => 'required',
             'email' => 'required|email',
             'password' => 'required',
-            'role' => 'required'
+            'role' => 'required',
         ]);
 
         $data = $request->all();
-
         $name = $request->name;
         $email = $request->email;
         $password = Hash::make($request->password);
@@ -156,69 +158,93 @@ class UserController extends Controller
             'name' => $name,
             'email' => $email,
             'password' => $password,
-            'role' => $role
+            'role' => $role,
         ]);
 
         return response()->json([
-            'status'  => 'success',
-            'Message' => $user
+            'status' => 'success',
+            'data' => $user
         ], 201);
-
     }
 
-    public function loginGoogle(Request $request){
+    public function loginGoogle(Request $request)
+    {
         $idToken = $request->id_token;
-        $client = new Google_Client(['client_id' => env('GOOGLE_CLIENT_ID')]);
+
+        //verify google id token
+        $client = new Google_Client(['client_id' => '134890297909-ti1c95bcmvps9jblmeclnbt7e174cmc0.apps.googleusercontent.com']);
+
         $payload = $client->verifyIdToken($idToken);
 
-        if($payload){
-            $google_id = $payload['sub'];
+        if ($payload) {
+            $googleId = $payload['sub'];
             $email = $payload['email'];
             $name = $payload['name'];
             $photo = $payload['picture'];
 
             $user = User::where('email', $email)->first();
 
-            if($user){
-                $user->google_id = $google_id;
+            if ($user) {
+                //update google id
+                $user->google_id = $googleId;
                 $user->save();
                 $token = $user->createToken('auth_token')->plainTextToken;
 
                 return response()->json([
-                    'status'  => 'success',
+                    'status' => 'success',
                     'data' => [
                         'user' => $user,
-                        // 'is_new' => false,
+                        'is_new' => false,
                         'token' => $token
                     ]
                 ], 200);
-            }else{
+            } else {
                 $user = User::create([
                     'name' => $name,
                     'email' => $email,
-                    'google_id' => $google_id,
-                    'password' => Hash::make('password'),
+                    'google_id' => $googleId,
+                    'password' => Hash::make($googleId),
                     'image' => $photo,
-                    'role' => 'user'
+                    'role' => 'patient'
                 ]);
 
                 $token = $user->createToken('auth_token')->plainTextToken;
 
                 return response()->json([
-                    'status'  => 'success',
+                    'status' => 'success',
                     'data' => [
                         'user' => $user,
-                        // 'is_new' => true,
+                        'is_new' => true,
                         'token' => $token
                     ]
                 ], 201);
             }
-
-        }else{
+        } else {
             return response()->json([
-                'status'  => 'error',
-                'message' => 'Invalid ID Token'
+                'status' => 'error',
+                'message' => 'Invalid google id token'
             ], 401);
         }
     }
+
+    public function updateToken(Request $request, $id)
+    {
+        $request->validate([
+            'one_signal_token' => 'required'
+        ]);
+
+        $token = $request->one_signal_token;
+
+        $user = User::find($id);
+
+        $user->update([
+            'one_signal_token' => $token
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $user
+        ], 200);
+    }
 }
+

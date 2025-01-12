@@ -4,11 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_clinicmobile_app/core/assets/assets.gen.dart';
 import 'package:flutter_clinicmobile_app/core/components/spaces.dart';
 import 'package:flutter_clinicmobile_app/core/constants/colors.dart';
+import 'package:flutter_clinicmobile_app/core/constants/global_variable.dart';
 import 'package:flutter_clinicmobile_app/core/extensions/build_context_ext.dart';
+import 'package:flutter_clinicmobile_app/core/utils/convert.dart';
+import 'package:flutter_clinicmobile_app/data/models/response/doctor_response_model.dart';
 
 class CardPremiumChat extends StatelessWidget {
+  final DoctorModel doctor;
   const CardPremiumChat({
     super.key,
+    required this.doctor,
   });
 
   @override
@@ -38,10 +43,20 @@ class CardPremiumChat extends StatelessWidget {
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(10.0),
                 ),
-                child: Image.asset(
+                child: doctor.image != null
+                    ? ClipRRect(
+                  borderRadius: BorderRadius.circular(10.0),
+                  child: Image.network(
+                    "${GlobalVariable.baseUrl}${doctor.image}",
+                    width: 87,
+                    height: 87,
+                    fit: BoxFit.cover,
+                  ),
+                )
+                    : Image.asset(
                   Assets.images.doctor1.path,
-                  width: 87.0,
-                  height: 87.0,
+                  width: 87,
+                  height: 87,
                   fit: BoxFit.cover,
                 ),
               ),
@@ -50,18 +65,18 @@ class CardPremiumChat extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'dr. Kiara Tasbiha',
-                      style: TextStyle(
+                    Text(
+                      doctor.name ?? "-",
+                      style: const TextStyle(
                         fontSize: 14.0,
                         fontWeight: FontWeight.w600,
                         color: Colors.black,
                       ),
                     ),
                     const SpaceHeight(4),
-                    const Text(
-                      'Spesialis kandungan',
-                      style: TextStyle(
+                    Text(
+                      doctor.specialation?.name ?? "-",
+                      style: const TextStyle(
                         fontSize: 10.0,
                         fontWeight: FontWeight.w400,
                         color: Colors.grey,
@@ -70,13 +85,13 @@ class CardPremiumChat extends StatelessWidget {
                     const SpaceHeight(10),
                     _itemRow(
                       Assets.icons.hospitalPrimary.path,
-                      'Klinik Sehat Prima',
+                      doctor.clinic?.name ?? " -",
                       16.0,
                     ),
                     const SpaceHeight(8),
                     _itemRow(
                       Assets.icons.clockPrimary.path,
-                      '11:00 - 12:00 WIB',
+                      "${Convert.formatToReadableTime2(doctor.startTime.toString())} - ${Convert.formatToReadableTime2(doctor.endTime.toString())} WIB",
                       16.0,
                     ),
                   ],

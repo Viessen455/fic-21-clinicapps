@@ -5,25 +5,16 @@ import 'package:flutter_clinicmobile_app/core/assets/assets.gen.dart';
 import 'package:flutter_clinicmobile_app/core/components/spaces.dart';
 import 'package:flutter_clinicmobile_app/core/constants/colors.dart';
 import 'package:flutter_clinicmobile_app/core/extensions/build_context_ext.dart';
+import 'package:flutter_clinicmobile_app/core/extensions/string_ext.dart';
+import 'package:flutter_clinicmobile_app/core/utils/convert.dart';
+import 'package:flutter_clinicmobile_app/data/models/response/order_response_model.dart';
 
 class CardDoctorHistory extends StatelessWidget {
-  final String type;
-  final String name;
-  final String? doctor;
-  final String price;
-  final String date;
-  final String id;
-  final String time;
+  final OrderModel model;
   const CardDoctorHistory({
-    Key? key,
-    required this.type,
-    required this.name,
-    this.doctor,
-    required this.price,
-    required this.date,
-    required this.id,
-    required this.time,
-  }) : super(key: key);
+    super.key,
+    required this.model,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +66,7 @@ class CardDoctorHistory extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          type,
+                          model.service ?? '-',
                           style: const TextStyle(
                             fontSize: 16.0,
                             fontWeight: FontWeight.w700,
@@ -83,7 +74,7 @@ class CardDoctorHistory extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          price,
+                          model.price?.toString().currencyFormatRpV2 ?? '0',
                           style: const TextStyle(
                             fontSize: 16.0,
                             fontWeight: FontWeight.w700,
@@ -96,14 +87,14 @@ class CardDoctorHistory extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          name,
+                          model.patient?.name ?? '-',
                           style: const TextStyle(
                               fontSize: 14.0,
                               fontWeight: FontWeight.w400,
                               color: Colors.black),
                         ),
                         Text(
-                          doctor ?? "",
+                          model.doctor?.name ?? "",
                           style: const TextStyle(
                               fontSize: 14.0,
                               fontWeight: FontWeight.w400,
@@ -123,7 +114,9 @@ class CardDoctorHistory extends StatelessWidget {
                               color: const Color(0xff26273A).withOpacity(0.6)),
                         ),
                         Text(
-                          date,
+                          Convert.formatToReadableDate(
+                            model.schedule!.toString(),
+                          ),
                           style: TextStyle(
                               fontSize: 12.0,
                               fontWeight: FontWeight.w400,
@@ -135,14 +128,16 @@ class CardDoctorHistory extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          id,
+                          model.id.toString(),
                           style: const TextStyle(
                               fontSize: 12.0,
                               fontWeight: FontWeight.w400,
                               color: Colors.black),
                         ),
                         Text(
-                          time,
+                          Convert.formatToReadableDate(
+                            model.schedule!.toString(),
+                          ),
                           style: TextStyle(
                               fontSize: 12.0,
                               fontWeight: FontWeight.w400,

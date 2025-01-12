@@ -3,45 +3,26 @@ import 'package:flutter/services.dart';
 import 'package:flutter_clinicmobile_app/core/components/spaces.dart';
 import 'package:flutter_clinicmobile_app/core/constants/colors.dart';
 import 'package:flutter_clinicmobile_app/core/extensions/build_context_ext.dart';
+import 'package:flutter_clinicmobile_app/presentation/doctor/history/history_order_doctor/history_order_doctor_bloc.dart';
 import 'package:flutter_clinicmobile_app/presentation/doctor/history/widgets/card_doctor_history.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-class HistoryDoctorPage extends StatelessWidget {
-  HistoryDoctorPage({super.key});
+class HistoryDoctorPage extends StatefulWidget {
+  const HistoryDoctorPage({super.key});
 
-  final List<Map<String, dynamic>> histories = [
-    {
-      "type": "Telemedis",
-      "name": "Sintia",
-      "price": "Rp. 19.000",
-      "date": "24 Nov 2024",
-      "id": "123456789125411",
-      "time": "05:15 WIB"
-    },
-    {
-      "type": "Chat Premium",
-      "name": "Bahri",
-      "price": "Rp. 19.000",
-      "date": "24 Nov 2024",
-      "id": "123456789125411",
-      "time": "09:15 WIB"
-    },
-    {
-      "type": "Chat Premium",
-      "name": "Fahiem",
-      "price": "Rp. 19.000",
-      "date": "24 Nov 2024",
-      "id": "123456789125411",
-      "time": "11:15 WIB"
-    },
-    {
-      "type": "Telemedis",
-      "name": "Rohman",
-      "price": "Rp. 19.000",
-      "date": "24 Nov 2024",
-      "id": "123456789125411",
-      "time": "10:15 WIB"
-    }
-  ];
+  @override
+  State<HistoryDoctorPage> createState() => _HistoryDoctorPageState();
+}
+
+class _HistoryDoctorPageState extends State<HistoryDoctorPage> {
+  @override
+  void initState() {
+    super.initState();
+    context
+        .read<HistoryOrderDoctorBloc>()
+        .add(const HistoryOrderDoctorEvent.getOrder());
+  }
+
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -78,24 +59,46 @@ class HistoryDoctorPage extends StatelessWidget {
               ),
             ),
             const SpaceHeight(14),
-            ListView.separated(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-              ),
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: histories.length,
-              separatorBuilder: (BuildContext context, int index) {
-                return const SpaceHeight(12);
-              },
-              itemBuilder: (BuildContext context, int index) {
-                return CardDoctorHistory(
-                  type: histories[index]["type"],
-                  name: histories[index]["name"],
-                  price: histories[index]["price"],
-                  date: histories[index]["date"],
-                  id: histories[index]["id"],
-                  time: histories[index]["time"],
+            BlocBuilder<HistoryOrderDoctorBloc, HistoryOrderDoctorState>(
+              builder: (context, state) {
+                return state.maybeWhen(
+                  orElse: () {
+                    return const SizedBox.shrink();
+                  },
+                  loading: () {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  },
+                  success: (data) {
+                    if (data.data!.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'Empty',
+                          style: TextStyle(
+                            fontSize: 16.0,
+                            color: Colors.black,
+                          ),
+                        ),
+                      );
+                    }
+                    return ListView.separated(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                      ),
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: data.data!.length,
+                      separatorBuilder: (BuildContext context, int index) {
+                        return const SpaceHeight(12);
+                      },
+                      itemBuilder: (BuildContext context, int index) {
+                        return CardDoctorHistory(
+                          model: data.data![index],
+                        );
+                      },
+                    );
+                  },
                 );
               },
             ),

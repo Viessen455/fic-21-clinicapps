@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_clinicmobile_app/core/assets/assets.gen.dart';
+import 'package:flutter_clinicmobile_app/core/components/spaces.dart';
+import 'package:flutter_clinicmobile_app/core/constants/colors.dart';
+import 'package:flutter_clinicmobile_app/core/constants/global_variable.dart';
 import 'package:flutter_clinicmobile_app/core/extensions/build_context_ext.dart';
-import '../../../../core/assets/assets.gen.dart';
-import '../../../../core/components/spaces.dart';
-import '../../../../core/constants/colors.dart';
-import '../../../doctor/history/widgets/card_doctor_history.dart';
-
+import 'package:flutter_clinicmobile_app/core/extensions/string_ext.dart';
+import 'package:flutter_clinicmobile_app/presentation/admin/home/blocs/get_clinic/get_clinic_bloc.dart';
+import 'package:flutter_clinicmobile_app/presentation/admin/home/blocs/get_orders_clinic/get_orders_clinic_bloc.dart';
+import 'package:flutter_clinicmobile_app/presentation/doctor/history/widgets/card_doctor_history.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AdminHomePage extends StatefulWidget {
   const AdminHomePage({super.key});
@@ -15,57 +18,24 @@ class AdminHomePage extends StatefulWidget {
 }
 
 class _AdminHomePageState extends State<AdminHomePage> {
-  final List<Map<String, dynamic>> histories = [
-    {
-      "type": "Telemedis",
-      "name": "Sintia",
-      "doctor": "dr Kiara Tasbiha",
-      "price": "Rp. 19.000",
-      "date": "24 Nov 2024",
-      "id": "123456789125411",
-      "time": "05:15 WIB"
-    },
-    {
-      "type": "Chat Premium",
-      "name": "Bahri",
-      "doctor": "dr Kiara Tasbiha",
-      "price": "Rp. 19.000",
-      "date": "24 Nov 2024",
-      "id": "123456789125411",
-      "time": "09:15 WIB"
-    },
-    {
-      "type": "Chat Premium",
-      "name": "Fahiem",
-      "doctor": "dr Kiara Tasbiha",
-      "price": "Rp. 19.000",
-      "date": "24 Nov 2024",
-      "id": "123456789125411",
-      "time": "11:15 WIB"
-    },
-    {
-      "type": "Telemedis",
-      "name": "Rohman",
-      "doctor": "dr Kiara Tasbiha",
-      "price": "Rp. 19.000",
-      "date": "24 Nov 2024",
-      "id": "123456789125411",
-      "time": "10:15 WIB"
-    }
-  ];
+  @override
+  void initState() {
+    super.initState();
+    context.read<GetClinicBloc>().add(const GetClinicEvent.getDetail());
+    context
+        .read<GetOrdersClinicBloc>()
+        .add(const GetOrdersClinicEvent.getOrders());
+  }
+
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Color(0xff1469F0),
-      statusBarBrightness: Brightness.dark,
-    ));
     return SingleChildScrollView(
       child: Stack(
         children: [
           Column(
             children: [
               Container(
-                height: 120,
+                height: 140,
                 width: context.deviceWidth,
                 padding: const EdgeInsets.all(20.0),
                 decoration: const BoxDecoration(
@@ -80,6 +50,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 ),
                 child: Column(
                   children: [
+                    const SpaceHeight(20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -89,11 +60,30 @@ class _AdminHomePageState extends State<AdminHomePage> {
                           height: 22.0,
                           fit: BoxFit.cover,
                         ),
-                        Image.asset(
-                          Assets.images.klinik.path,
-                          width: 40.0,
-                          height: 40.0,
-                          fit: BoxFit.fill,
+                        BlocBuilder<GetClinicBloc, GetClinicState>(
+                          builder: (context, state) {
+                            return state.maybeWhen(
+                              orElse: () {
+                                return const SizedBox.shrink();
+                              },
+                              loading: () {
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              },
+                              success: (data) {
+                                return ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Image.network(
+                                    '${GlobalVariable.baseUrl}/storage/${data.clinicImage}',
+                                    width: 40.0,
+                                    height: 40.0,
+                                    fit: BoxFit.fill,
+                                  ),
+                                );
+                              },
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -103,25 +93,41 @@ class _AdminHomePageState extends State<AdminHomePage> {
               const SpaceHeight(
                 136,
               ),
-              ListView.separated(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                ),
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: histories.length,
-                separatorBuilder: (BuildContext context, int index) {
-                  return const SpaceHeight(12);
-                },
-                itemBuilder: (BuildContext context, int index) {
-                  return CardDoctorHistory(
-                    type: histories[index]["type"],
-                    name: histories[index]["name"],
-                    doctor: histories[index]["doctor"],
-                    price: histories[index]["price"],
-                    date: histories[index]["date"],
-                    id: histories[index]["id"],
-                    time: histories[index]["time"],
+              BlocBuilder<GetOrdersClinicBloc, GetOrdersClinicState>(
+                builder: (context, state) {
+                  return state.maybeWhen(
+                    orElse: () {
+                      return const SizedBox.shrink();
+                    },
+                    loading: () {
+                      return const Center(
+                        child:
+                        CircularProgressIndicator(color: AppColors.primary),
+                      );
+                    },
+                    success: (data) {
+                      if (data.data!.isEmpty) {
+                        return const Center(
+                          child: Text("Data Kosong"),
+                        );
+                      }
+                      return ListView.separated(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                        ),
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: data.data!.length,
+                        separatorBuilder: (BuildContext context, int index) {
+                          return const SpaceHeight(12);
+                        },
+                        itemBuilder: (BuildContext context, int index) {
+                          return CardDoctorHistory(
+                            model: data.data![index],
+                          );
+                        },
+                      );
+                    },
                   );
                 },
               ),
@@ -129,7 +135,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
           ),
           Container(
             margin: const EdgeInsets.only(
-              top: 80.0,
+              top: 100.0,
               left: 20.0,
               right: 20.0,
             ),
@@ -147,23 +153,43 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 end: Alignment.topCenter,
               ),
             ),
-            child: const Column(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  "Klinik Sehat prima",
-                  style: TextStyle(
-                      fontSize: 14.0,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.white),
+                BlocBuilder<GetClinicBloc, GetClinicState>(
+                  builder: (context, state) {
+                    return state.maybeWhen(orElse: () {
+                      return const SizedBox.shrink();
+                    }, loading: () {
+                      return const Center(child: CircularProgressIndicator());
+                    }, success: (data) {
+                      return Text(
+                        data.clinicName,
+                        style: TextStyle(
+                            fontSize: 14.0,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.white),
+                      );
+                    });
+                  },
                 ),
-                Text(
-                  "Total  Order : 60",
-                  style: TextStyle(
-                      fontSize: 24.0,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.white),
+                BlocBuilder<GetClinicBloc, GetClinicState>(
+                  builder: (context, state) {
+                    return state.maybeWhen(orElse: () {
+                      return const SizedBox.shrink();
+                    }, loading: () {
+                      return const Center(child: CircularProgressIndicator());
+                    }, success: (data) {
+                      return Text(
+                        "Income : ${data.totalIncome.toString().currencyFormatRpV2}",
+                        style: const TextStyle(
+                            fontSize: 24.0,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.white),
+                      );
+                    });
+                  },
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -171,7 +197,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           "Total Pasien",
                           style: TextStyle(
                             fontSize: 12.0,
@@ -179,20 +205,31 @@ class _AdminHomePageState extends State<AdminHomePage> {
                             color: AppColors.white,
                           ),
                         ),
-                        Text(
-                          "30",
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.white,
-                          ),
+                        BlocBuilder<GetClinicBloc, GetClinicState>(
+                          builder: (context, state) {
+                            return state.maybeWhen(orElse: () {
+                              return const SizedBox.shrink();
+                            }, loading: () {
+                              return const Center(
+                                  child: CircularProgressIndicator());
+                            }, success: (data) {
+                              return Text(
+                                "${data.totalPatient}",
+                                style: const TextStyle(
+                                  fontSize: 20.0,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.white,
+                                ),
+                              );
+                            });
+                          },
                         ),
                       ],
                     ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           "Total Dokter",
                           style: TextStyle(
                             fontSize: 12.0,
@@ -200,13 +237,28 @@ class _AdminHomePageState extends State<AdminHomePage> {
                             color: AppColors.white,
                           ),
                         ),
-                        Text(
-                          "20",
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.white,
-                          ),
+                        BlocBuilder<GetClinicBloc, GetClinicState>(
+                          builder: (context, state) {
+                            return state.maybeWhen(
+                              orElse: () {
+                                return const SizedBox.shrink();
+                              },
+                              loading: () {
+                                return const Center(
+                                    child: CircularProgressIndicator());
+                              },
+                              success: (data) {
+                                return Text(
+                                  "${data.totalDoctor}",
+                                  style: const TextStyle(
+                                    fontSize: 20.0,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.white,
+                                  ),
+                                );
+                              },
+                            );
+                          },
                         ),
                       ],
                     )
